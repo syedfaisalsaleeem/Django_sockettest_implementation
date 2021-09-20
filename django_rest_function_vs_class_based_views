@@ -1,0 +1,98 @@
+Django has two types of views; function-based views (FBVs), and class-based views (CBVs). Django originally started out with only FBVs, but then added CBVs as a way to templatize functionality so that you didn’t have to write boilerplate (i.e. the same code) code over and over again.
+At their core, CBVs are Python classes. Django ships with a variety of “template” CBVs that have pre-configured functionality that you can reuse and oftentimes extend. These classes are then given helpful names that describe what kind of functionality they provide. You’ll often see these referred to as “generic views” because they provide solutions to common requirements. The classes have documentation on Django’s project site that shows what functionality is offered, what settings are required or possible, and how to extend them.
+As a reminder, Django’s views have three requirements:
+They are callable. A view can be either function or a class-based view. CBVs inherit the method as_view() which uses a dispatch() method to call the appropriate method depending on the HTTP verb (get, post, etc)
+They must accept an HttpRequest object as its first positional argument
+They must return an HttpResponse object or raise an exception.
+Keep that in mind: class-based views does not replace function-based views.
+When writing views, we have a choice: function or class-based? Both have their pros and cons :~
+
+Function Based Views
+Pros
+Simple to implement
+Easy to read
+Explicit code flow
+Straightforward usage of decorators
+good for one-off or specialized functionality
+Cons
+Hard to extend and reuse the code
+Handling of HTTP methods via conditional branching
+This function is very easy to implement and it’s very useful but the main disadvantage is that on a large Django project, usually a lot of similar functions in the views . If all objects of a Django project usually have CRUD operations so this code is repeated again and again unnecessarily and this was one of the reasons that the class-based views and generic views were created for solving that problem.
+Here’s an example :~
+def my_create_view(request, pk):
+  template_name = 'form.html'
+  form_class = MyForm
+
+  form = form_class
+
+  if request.method == 'POST':
+    form = form_class(request.POST)
+    if form.is_valid():
+      form.save()
+      return HttpResponseRedirect(reverse('list-view'))
+
+  return render(request, template_name, {'form': form})
+Class Based Views
+Class-based views provide an alternative way to implement views as Python objects instead of functions. They do not replace function-based views, but have certain differences and advantages when compared to function-based views.
+Pros
+Code reuseability — In CBV, a view class can be inherited by another view class and modified for a different use case.
+DRY — Using CBVs help to reduce code duplication
+Code extendability — CBV can be extended to include more functionalities using Mixins
+Code structuring — In CBVs A class based view helps you respond to different http request with different class instance methods instead of conditional branching statements inside a single function based view.
+Built-in generic class-based views
+Cons
+Harder to read
+Implicit code flow
+Use of view decorators require extra import, or method override
+Here’s an example :~
+class MyCreateView(View):
+  template_name = 'form.html'
+  form_class = MyForm
+
+  def get(self, request, *args, **kwargs):
+    form = self.form_class
+    return render(request, template_name, {'form': form})
+
+  def post(self, request, *args, **kwargs):
+    form = self.form_class(request.POST)
+    if form.is_valid():
+      form.save()
+      return HttpResonseRedirect(reverse('list-view'))
+    else:
+      return render(request, self.template_name, {'form': form})
+We do have a little bit of abstraction, with the inherited as_view() method calling dispatch() to determine which class method should be executed, depending on the HTTP request. as_view() allows you to over-ride class attributes in your URLconfs, so if you wanted to reuse MyCreateView but just change the template and form used, you could do something like this:
+urlpatterns = [
+    url(r'^new/$', MyCreateView.as_view(), name='original-create-view')
+    url(r'^new_two/$', MyCreateView.as_view(template_name='other_form.html', form_class='MyOtherForm'), name='modified-create-view')
+  ]
+Once you start getting into Django’s generic class-based views, you’ll have the option to also over-write the helper methods like get_form_classand get_template_names, which allows you to insert additional logic at these points, rather than just over-riding a class attribute. One example is the ModelFormMixin — the form_valid() method is overriden and the associated model is saved with the updated value stored in self.object().
+Django Generic Class-Based Views
+The generic class-based-views was introduced to address the common use cases in a Web application, such as creating new objects, form handling, list views, pagination, archive views and so on.They come in the Django core, and you can implement them from the module django.views.generic.
+They are great and can speed up the development process.
+Django provides a set of views and mixins, generic class-based views, which aim to solve some of the most common tasks in web development. The goal isn’t in reducing boiler plate, per se, but rather to prevent you from having to reinvent the wheel over and over. Let’s modify MyCreateView to inherit fromdjango.views.generic.CreateView:
+from django.views.generic import CreateView 
+class MyCreateView(CreateView):
+    model = MyModel  
+    form_class = MyForm
+Whoa. Where’d all the code go? The answer, of course, is that it’s all in django.views.generic.CreateView. Take a look at Classy Class-Based Views. It’s a vital resource for understanding Django’s generic class-based views. If you navigate over to the entry for CreateView, you’ll see that our little two-line view class has inherited over forty methods and class attributes!
+When you inherit from CreateView, you gain a lot of functionality and shortcuts, but you also buy into a sort of ‘convention over configuration’ style arrangement.
+template needs to be in /<modelname>/<modelname>_form.html by default — you can change this by setting the class attribute template_name and template_name_suffix
+we need to specify model and form_class attributes, because the methods you inherited from CreateView rely on them.
+we either need to specify a success_url as a class attribute on the view, or else define get_absolute_url() in the model, otherwise the view won’t know where to redirect to following a successful form submission.
+we need to either specify a fields class attribute on the view, or else define the fields in your form. In this example, I chose to do the latter. Just for reference, here’s a quick example of how that might look:
+from django import forms
+from . models import MyModel 
+class MyModelForm(forms.ModelForm):
+  class Meta:
+    model = MyModel
+    fields = ['name', 'description']
+Stratergies for using Django’s Generic Class-Based Views
+Start simple. What’s the main action of the view in question? Say for example you want a Recipeview which also has a list of associated Ingredients. Start with the DetailView as your base.
+Add mixins to build functionality. To add Ingredients to our Recipe's detail view, we use the MultipleObjectMixin, which provides features like ordering and pagination.
+Over-ride necessary methods to get the functionality you need. Refer to http://ccbv.co.uk/ or, if your IDE (like PyCharm) provides a file structure window, to take a look at what class attributes and methods you have available to you. The inheritance structure gets complicated pretty quickly, but thankfully all the methods are named intelligently, so you don’t need to understand the exact order everything gets called in.
+Conclusion
+There is no right or wrong. It all depends on the context and the needs. As I mentioned in the beginning of this post, class-based views does not replace function-based views. There are cases where function-based views are better. In other cases class-based views are better.
+For example, if you are implementing a list view, and you can get it working just by subclassing the ListViewand overriding the attributes. Great. Go for it.
+Now, if you are performing a more complex operation, handling multiple forms at once, a function-based view will serve you better.
+Now a general advice from the Django documentation:~
+If you find you’re struggling to implement your view as a subclass of a generic view, then you may find it more effective to write just the code you need, using your own class-based or functional views.
