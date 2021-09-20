@@ -12,7 +12,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 import json
 from django.http import HttpResponse
-from .target_identify_socket import get_target_data
+from .target_identify_socket import get_target_data,TargetIdentifySocialMedia
+import threading
 # import socketio
 # sio = socketio.Client()
 
@@ -61,7 +62,12 @@ class GroupViewSet(APIView):
     API endpoint that allows groups to be viewed or edited.
     """
     def get(self, request, format=None):
-        responseData = get_target_data(target="facebook",query="ali")
+        responseData = TargetIdentifySocialMedia().start_targetidentify(target="reddit",query="ali")
+        # x = threading.Thread(target=get_target_data,args=("reddit","ali",))
+        # x.start()
+        # x.join()
+        # print(x)
+        # responseData = get_target_data(target="facebook",query="ali")
         # print(request)
         # def message1():
         #     print("crawled")
