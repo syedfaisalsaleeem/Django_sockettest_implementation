@@ -54,6 +54,7 @@ class UserViewSet(APIView):
     """
     def get(self, request, format=None):
         responseData = TargetIdentifySocialMedia().start_targetidentify(target="twitter",query="ali")
+        # responseData = TargetIdentifySocialMedia().start_targetidentify(target="facebook",query="faisal")
         
         return HttpResponse(json.dumps(responseData), content_type="application/json")
     # queryset = User.objects.all().order_by('-date_joined')
@@ -66,7 +67,7 @@ class GroupViewSet(APIView):
     API endpoint that allows groups to be viewed or edited.
     """
     def get(self, request, format=None):
-        responseData = TargetIdentifySocialMedia().start_targetidentify(target="facebook",query="faisal")
+        responseData = TargetIdentifySocialMedia().start_targetidentify(target="tumblr",query="faisal")
         # x = threading.Thread(target=get_target_data,args=("reddit","ali",))
         # x.start()
         # x.join()
