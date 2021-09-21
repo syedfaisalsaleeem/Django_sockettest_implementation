@@ -20,13 +20,14 @@ from rest_framework import routers
 from auth_django import views
 
 router = routers.DefaultRouter()
-router.register(r'users', views.UserViewSet)
+# router.register(r'users', views.UserViewSet)
 # router.register(r'groups', views.GroupViewSet)
 # router.register(r'login', views.Example)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('django/', views.GroupViewSet.as_view()),
+    path('django1/', views.UserViewSet.as_view()),
     url(r'^rest-auth/', include('rest_auth.urls')),
     url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
     path('', include(router.urls)),
