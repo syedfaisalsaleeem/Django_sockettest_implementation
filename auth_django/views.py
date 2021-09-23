@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 import json
 from django.http import HttpResponse
-from .target_identify_socket import get_target_data,TargetIdentifySocialMedia
+from .target_identify_socket import TargetIdentifySocialMedia
 import threading
 # import socketio
 # sio = socketio.Client()
