@@ -94,8 +94,7 @@ import time
 
 class TargetIdentifySocialMedia():
     def __init__(self):
-        self.target_data = []
-
+        self.target_data = [] 
         try:
             sio.connect('http://192.168.18.240:8000',transports='polling')
         except:
@@ -109,10 +108,16 @@ class TargetIdentifySocialMedia():
         print("crawled")
         # sio.disconnect()
     
+    def create_new_json(self, target):
+        with open('{}_data.json'.format(target),'w') as f:
+            json.dump([{}],f,indent=4)
+        
     def get_target_data(self,target,query):
         data = [{}]
+        self.create_new_json(target)
         try:
-            sio.emit('message', {'social_media':target,"query":query},callback=self.message1)
+            sio.emit('join',{'username':'','room':sio.sid})
+            sio.emit('message', {'social_media':target,"query":query,'room':sio.sid},callback=self.message1)
             sio.wait()
 
             with open('{}_data.json'.format(target)) as f:
@@ -150,15 +155,13 @@ class TargetIdentifySocialMedia():
         #         self.target_data = []
         #     return data
     
-    def create_new_json(self, target):
-        with open('{}_data.json'.format(target),'w') as f:
-            json.dump([{}],f,indent=4)
+
             
     def start_targetidentify(self,target,query):
-        import threading
-        d = threading.Thread(target=self.get_target_data,args=(target,query))
-        d.start()
-        d.join()
+        # import threading
+        # d = threading.Thread(target=self.get_target_data,args=(target,query))
+        # d.start()
+        # d.join()
         # self.create_new_json(target)
-        # data = self.get_target_data(target=target,query=query)
+        data = self.get_target_data(target=target,query=query)
         return self.target_data
